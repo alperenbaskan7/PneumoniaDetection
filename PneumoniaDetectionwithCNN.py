@@ -15,6 +15,7 @@ from keras.preprocessing import image
 from keras.models import Sequential
 from keras.optimizers import SGD
 
+# convolution, dropout and max pool. layers added
 opt = SGD(learning_rate = 0.001)
 model = Sequential()
 model.add(Conv2D(32, (3, 3), input_shape=(256, 256, 3),padding = 'same'))
@@ -40,13 +41,16 @@ model.add(Dropout(0.5))
 model.add(Dense(512,kernel_regularizer=regularizers.l2(1e-4)))
 model.add(Activation('relu'))
 model.add(Dropout(0.5))
+# the final classification is done via fully connected layers
 model.add(Dense(3))
 model.add(Activation('softmax'))
 model.summary()
+# categorical crossentropy is used since there are 3 classes
 model.compile(loss = 'categorical_crossentropy',
               optimizer = 'Adam',
               metrics = ['accuracy'])
 
+# image preprocessing 
 train_datagen = image.ImageDataGenerator(
       rescale=1./256,
       shear_range=0.1, #0.2
@@ -55,6 +59,7 @@ train_datagen = image.ImageDataGenerator(
       )
 test_dataset = image.ImageDataGenerator(rescale=1./256)
 
+#Take the path to a directory
 train_generator = train_datagen.flow_from_directory(
     '/content/drive/MyDrive/dataset/training/',
     target_size = (256,256),
@@ -65,6 +70,7 @@ train_generator = train_datagen.flow_from_directory(
 
 train_generator.class_indices
 
+# take validation path to a directory
 validation_generator = test_dataset.flow_from_directory(
     '/content/drive/MyDrive/dataset/validation/',
     target_size = (256,256),
@@ -75,17 +81,17 @@ validation_generator = test_dataset.flow_from_directory(
 
 STEP_SIZE_TRAIN=train_generator.n//train_generator.batch_size
 STEP_SIZE_VALID=validation_generator.n//validation_generator.batch_size
-#STEP_SIZE_TEST=test_generator.n//test_generator.batch_size
 
+#Configure the model for training
 history = model.fit(train_generator,
-                    steps_per_epoch=89, #STEP_SIZE_TRAIN,
+                    steps_per_epoch=89, 
                     validation_data=validation_generator,
-                    validation_steps=3, #STEP_SIZE_VALID,
-                    epochs=100, #60
+                    validation_steps=3, 
+                    epochs=100,
          )
 
 print(history.history.keys())
-
+# plot model accuracy
 plt.plot(history.history['accuracy'], label='accuracy')
 plt.plot(history.history['val_accuracy'], label = 'val_accuracy')
 plt.xlabel('Epoch')
@@ -93,9 +99,5 @@ plt.ylabel('Training Accuracy')
 plt.ylim([0.5, 1])
 plt.legend(loc='lower right')
 
-#test_loss, test_acc = model.evaluate(test_images,  test_labels, verbose=2)
-
-#from keras.models import load_model
+# save the model
 model.save("network.h5")
-#loaded_model = load_model("network.h5")
-#loss, accuracy = loaded_model.evaluate(test_data, test_targets)
